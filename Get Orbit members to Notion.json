@@ -1,0 +1,367 @@
+{
+  "id": 4,
+  "name": "Get Orbit members to Notion",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "count",
+              "value": 1
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Init Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"Pagination URL\"].json[\"next\"]}}",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer obu_AAGN0mWtRmkCUvw6vfrHgkA1qNHcE98h_XwjYk17"
+            }
+          ]
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "items",
+              "value": "100"
+            },
+            {
+              "name": "direction",
+              "value": "DESC"
+            },
+            {
+              "name": "relative",
+              "value": "all_time"
+            }
+          ]
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": "bf5fa9a6-c12d-465d-a290-df833523999e",
+        "title": "Title",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Email|email",
+              "emailValue": "={{$json[\"attributes\"][\"email\"] || \" \"}}"
+            },
+            {
+              "key": "Activities count|number",
+              "numberValue": "={{$json[\"attributes\"][\"activities_count\"] || 0}}"
+            },
+            {
+              "key": "Id|title",
+              "title": "={{$json[\"id\"] || \" \"}}"
+            },
+            {
+              "key": "Company|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"company\"] || \" \"}}"
+            },
+            {
+              "key": "Created at|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"created_at\"] || \" \"}}"
+            },
+            {
+              "key": "Github|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"github\"] || \" \"}}"
+            },
+            {
+              "key": "Github followers|number",
+              "numberValue": "={{$json[\"attributes\"][\"github_followers\"] || 0}}"
+            },
+            {
+              "key": "Last activity occurred at|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"last_activity_occurred_at\"] || \" \"}}"
+            },
+            {
+              "key": "Location|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"location\"] || \" \"}}"
+            },
+            {
+              "key": "Name|rich_text",
+              "textContent": "={{$json[\"attributes\"][\"name\"] || \" \"}}"
+            },
+            {
+              "key": "Love|number",
+              "numberValue": "={{parseFloat($json[\"attributes\"][\"love\"]) || 0}}"
+            },
+            {
+              "key": "Orbit url|url",
+              "urlValue": "={{$json[\"attributes\"][\"orbit_url\"] || \" \"}}"
+            }
+          ]
+        }
+      },
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        300
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "5",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Code here will run only once, no matter how many input items there are.\n// More info and help: https://docs.n8n.io/nodes/n8n-nodes-base.function\n// Tip: You can use luxon for dates and $jmespath for querying JSON structures\n\n// Loop over inputs and add a new field called 'myNewField' to the JSON of each one\nconst res = items[0].json.data\n\n\n\nreturn res;"
+      },
+      "name": "Split Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return new Promise((resolve, reject) => {\n      setTimeout(() => { resolve([{ json: {} }]) }, 5000);\n    })\n"
+      },
+      "name": "Wait 5s",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nlet next = 'https://app.orbit.love/api/v1/singularity-data/members'\n\nif (items[0].json.next) {\n  next = items[0].json.next\n}\n\nreturn [\n  {\n    json: {\n      next : next\n    }\n  }\n]"
+      },
+      "name": "Pagination URL",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -1040,
+        300
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "next",
+              "value": "={{$node[\"HTTP Request\"].json[\"links\"][\"next\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set next URL",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -20,
+        460
+      ],
+      "executeOnce": true,
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [],
+          "boolean": [
+            {
+              "value1": "={{$node[\"HTTP Request\"].json[\"links\"][\"next\"] ? true : false}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Check if pagination?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -20,
+        300
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "functionCode": "const allData = []\n\nlet counter = 0;\ndo {\n  try {\n    const items = $items(\"HTTP Request\", 0, counter).map(item => item.json.results);\n                    \n    const aja = items[0].map(item => {\n      return { json: item }\n    })    \n    \n    allData.push.apply(allData, aja);\n    //allData.push($items(\"Increment\", 0, counter));\n  } catch (error) {\n    return allData;  \n  }\n\n  counter++;\n} while(true);\n\n"
+      },
+      "name": "Combine all data",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        180,
+        320
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Pagination URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Data": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s": {
+      "main": [
+        [
+          {
+            "node": "Check if pagination?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagination URL": {
+      "main": [
+        [
+          {
+            "node": "Init Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set next URL": {
+      "main": [
+        [
+          {
+            "node": "Pagination URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if pagination?": {
+      "main": [
+        [
+          {
+            "node": "Set next URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Combine all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine all data": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "createdAt": "2022-06-30T07:21:16.476Z",
+  "updatedAt": "2022-07-02T03:03:30.932Z",
+  "settings": {},
+  "staticData": null,
+  "tags": [
+    {
+      "id": "1",
+      "name": "Orbit",
+      "createdAt": "2022-06-30T09:19:23.924Z",
+      "updatedAt": "2022-06-30T09:19:23.924Z"
+    },
+    {
+      "id": "2",
+      "name": "Notion",
+      "createdAt": "2022-06-30T09:19:26.195Z",
+      "updatedAt": "2022-06-30T09:19:26.195Z"
+    }
+  ]
+}
