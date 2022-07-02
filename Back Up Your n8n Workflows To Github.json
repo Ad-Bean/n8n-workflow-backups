@@ -191,19 +191,18 @@
           "string": [
             {
               "name": "repo.owner",
-              "value": "n8n"
+              "value": "Ad-Bean"
             },
             {
               "name": "repo.name",
-              "value": "backups"
+              "value": "n8n-workflow-backups"
             },
             {
-              "name": "repo.path",
-              "value": "workflows/"
+              "name": "repo.path"
             },
             {
               "name": "backupFolder",
-              "value": "/home/node/tmp/backups/"
+              "value": "/adbean/backUp"
             }
           ]
         },
@@ -514,7 +513,7 @@
     }
   },
   "createdAt": "2022-07-02T03:24:25.641Z",
-  "updatedAt": "2022-07-02T03:24:25.641Z",
+  "updatedAt": "2022-07-02T03:55:32.129Z",
   "settings": {},
   "staticData": null,
   "tags": []
