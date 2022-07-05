@@ -1,0 +1,128 @@
+{
+  "id": 7,
+  "name": "Get the PRs of a repository",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "position": [
+        -460,
+        340
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubOAuth2Api",
+        "url": "https://api.github.com/repos/singularity-data/risingwave/pulls",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        }
+      },
+      "name": "Get Risingwave Pulls",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        340
+      ],
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "4",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": "https://www.notion.so/singularity-data/2639c458cdb94f60a4c85dd7bf9a0956?v=32045658b1e64b62acb4357a4475bd8b"
+      },
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "5",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "Write Binary File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        120,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "items[0].binary = {\n  data: {\n    data: new Buffer(JSON.stringify(items[0].json, null, 2)).toString('base64')\n  }\n};\nreturn items;"
+      },
+      "name": "Make Binary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Get Risingwave Pulls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Risingwave Pulls": {
+      "main": [
+        [
+          {
+            "node": "Make Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Binary": {
+      "main": [
+        [
+          {
+            "node": "Write Binary File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2022-07-05T02:35:56.965Z",
+  "updatedAt": "2022-07-05T02:49:57.487Z",
+  "settings": {},
+  "staticData": null,
+  "tags": []
+}
