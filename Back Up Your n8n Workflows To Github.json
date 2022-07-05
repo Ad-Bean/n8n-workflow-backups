@@ -202,7 +202,7 @@
             },
             {
               "name": "backupFolder",
-              "value": "/adbean/backUp"
+              "value": "adbean/backUp/"
             }
           ]
         },
@@ -513,7 +513,7 @@
     }
   },
   "createdAt": "2022-07-02T03:24:25.641Z",
-  "updatedAt": "2022-07-02T03:55:32.129Z",
+  "updatedAt": "2022-07-05T02:40:54.780Z",
   "settings": {},
   "staticData": null,
   "tags": []
