@@ -8,8 +8,8 @@
       "name": "Start",
       "type": "n8n-nodes-base.start",
       "position": [
-        -460,
-        340
+        -1600,
+        820
       ],
       "typeVersion": 1
     },
@@ -17,8 +17,10 @@
       "parameters": {
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "githubOAuth2Api",
-        "url": "https://api.github.com/repos/singularity-data/risingwave/pulls",
-        "options": {},
+        "url": "={{$node[\"Config URL\"].json[\"next\"]}}",
+        "options": {
+          "fullResponse": true
+        },
         "headerParametersUi": {
           "parameter": [
             {
@@ -32,8 +34,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -260,
-        340
+        -1240,
+        820
       ],
       "credentials": {
         "githubOAuth2Api": {
@@ -45,15 +47,42 @@
     {
       "parameters": {
         "resource": "databasePage",
-        "operation": "update",
-        "pageId": "https://www.notion.so/singularity-data/2639c458cdb94f60a4c85dd7bf9a0956?v=32045658b1e64b62acb4357a4475bd8b"
+        "databaseId": "2639c458-cdb9-4f60-a4c8-5dd7bf9a0956",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "url|url",
+              "urlValue": "={{$json[\"html_url\"] || \" \"}}"
+            },
+            {
+              "key": "state|rich_text",
+              "textContent": "={{$json[\"state\"] || \" \"}}"
+            },
+            {
+              "key": "user|rich_text",
+              "textContent": "={{$json[\"user\"][\"login\"] || \" \"}}"
+            },
+            {
+              "key": "author_association|rich_text",
+              "textContent": "={{$json[\"author_association\"] || \" \"}}"
+            },
+            {
+              "key": "created_at|rich_text",
+              "textContent": "={{$json[\"created_at\"] || \" \"}}"
+            },
+            {
+              "key": "id|title",
+              "title": "={{($json[\"id\"]).toString() || \" \"}}"
+            }
+          ]
+        }
       },
       "name": "Notion",
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2,
       "position": [
-        440,
-        300
+        -820,
+        600
       ],
       "credentials": {
         "notionApi": {
@@ -63,30 +92,132 @@
       }
     },
     {
-      "parameters": {},
-      "name": "Write Binary File",
-      "type": "n8n-nodes-base.writeBinaryFile",
+      "parameters": {
+        "functionCode": "return new Promise((resolve, reject) => {\n      setTimeout(() => { resolve([{ json: {} }]) }, 5000);\n    })\n"
+      },
+      "name": "Wait",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -820,
+        820
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "functionCode": "\nlet next = 'https://api.github.com/repos/singularity-data/risingwave/pulls?state=all&page=1'\n\nif (items[0].json.next) {\n  next = items[0].json.next\n}\n\nreturn [\n  {\n    json: {\n      next : next\n    }\n  }\n]"
+      },
+      "name": "Config URL",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -1400,
+        820
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [],
+          "boolean": [
+            {
+              "value1": "={{$node[\"Get Next\"].json[\"next\"] ? true : false}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Check if pagination?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -580,
+        820
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "functionCode": "const allData = []\n\nlet counter = 0;\ndo {\n  try {\n    const items = $items(\"Get Risingwave Pulls\", 0, counter).map(item => item.json.results);\n                    \n    const aja = items[0].map(item => {\n      return { json: item }\n    })    \n    \n    allData.push.apply(allData, aja);\n    //allData.push($items(\"Increment\", 0, counter));\n  } catch (error) {\n    return allData;  \n  }\n\n  counter++;\n} while(true);\n\n"
+      },
+      "name": "Combine all data",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -360,
+        840
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "functionCode": "// Code here will run only once, no matter how many input items there are.\n// More info and help: https://docs.n8n.io/nodes/n8n-nodes-base.function\n// Tip: You can use luxon for dates and $jmespath for querying JSON structures\n\n// Loop over inputs and add a new field called 'myNewField' to the JSON of each one\nconst link = items[0].json.headers.link\n\nconst arr = link.split(', ')\nconst urls = arr.map(a => a.split('; '))\nconst pagination = urls.map( r => {\n   let t = []\n    let obj = {}\n    let reg = /rel=\"([a-z]+)\"/g\n    while ( (t = reg.exec(r[1])) !== null) {\n        obj[t[1]] = r[0].slice(1, r[0].length - 1)\n    }\n    return obj\n})\n\n\nlet next = \"\"\n\nnext = pagination.filter(page => page.next)[0].next\n\nreturn [\n  {\n    json: {\n      next : next\n    }\n  }\n]"
+      },
+      "name": "Get Next",
+      "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        120,
-        340
+        -1060,
+        820
       ]
     },
     {
       "parameters": {
-        "functionCode": "items[0].binary = {\n  data: {\n    data: new Buffer(JSON.stringify(items[0].json, null, 2)).toString('base64')\n  }\n};\nreturn items;"
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "next",
+              "value": "={{$node[\"Get Next\"].json[\"next\"]}}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "name": "Make Binary",
+      "name": "Set next URL",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -580,
+        1020
+      ],
+      "executeOnce": true,
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "functionCode": "// Code here will run only once, no matter how many input items there are.\n// More info and help: https://docs.n8n.io/nodes/n8n-nodes-base.function\n// Tip: You can use luxon for dates and $jmespath for querying JSON structures\n\nreturn items[0].json.body.map(item => {\n  return {\n    json: item\n  }\n});\n\n"
+      },
+      "name": "Split Data",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -60,
-        340
+        -1060,
+        600
       ]
     }
   ],
   "connections": {
     "Start": {
+      "main": [
+        [
+          {
+            "node": "Config URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check if pagination?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config URL": {
       "main": [
         [
           {
@@ -97,22 +228,67 @@
         ]
       ]
     },
-    "Get Risingwave Pulls": {
+    "Check if pagination?": {
       "main": [
         [
           {
-            "node": "Make Binary",
+            "node": "Set next URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Combine all data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Make Binary": {
+    "Get Risingwave Pulls": {
       "main": [
         [
           {
-            "node": "Write Binary File",
+            "node": "Get Next",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Next": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set next URL": {
+      "main": [
+        [
+          {
+            "node": "Config URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Data": {
+      "main": [
+        [
+          {
+            "node": "Notion",
             "type": "main",
             "index": 0
           }
@@ -121,8 +297,15 @@
     }
   },
   "createdAt": "2022-07-05T02:35:56.965Z",
-  "updatedAt": "2022-07-05T02:49:57.487Z",
+  "updatedAt": "2022-07-05T06:55:35.679Z",
   "settings": {},
   "staticData": null,
-  "tags": []
+  "tags": [
+    {
+      "id": "3",
+      "name": "Github",
+      "createdAt": "2022-07-05T03:58:17.173Z",
+      "updatedAt": "2022-07-05T03:58:17.173Z"
+    }
+  ]
 }
